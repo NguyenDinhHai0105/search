@@ -97,8 +97,28 @@ def breadthFirstSearch(problem):
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
 
+    frontier = util.PriorityQueue()
+    startLocation = problem.getStartState()
+    # (location, path, cost)
+    startNode = (startLocation, [], 0)
+    # totalCost = 0
+    frontier.push(startNode, 0)
+    visitedLocation = set()
+
+    while not frontier.isEmpty():
+        # node[0] is location, while node[1] is path, while node[2] is cumulative cost
+        node = frontier.pop()
+        if problem.isGoalState(node[0]):
+            return node[1]
+        if node[0] not in visitedLocation:
+            visitedLocation.add(node[0])
+            for successor in problem.getSuccessors(node[0]):
+                if successor[0] not in visitedLocation:
+                    cost = node[2] + successor[2]
+                    frontier.push((successor[0], node[1] + [successor[1]], cost), cost)
+
+    util.raiseNotDefined()
 def nullHeuristic(state, problem=None):
     """
     A heuristic function estimates the cost from the current state to the nearest
@@ -109,6 +129,27 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
+    frontier = util.PriorityQueue()
+    startLocation = problem.getStartState()
+    # (location, path, cost)
+    startNode = (startLocation, [], 0)
+    # totalCost = 0
+    frontier.push(startNode, 0)
+    visitedLocation = set()
+
+    while not frontier.isEmpty():
+        # node[0] is location, while node[1] is path, while node[2] is cumulative cost
+        node = frontier.pop()
+        if problem.isGoalState(node[0]):
+            return node[1]
+        if node[0] not in visitedLocation:
+            visitedLocation.add(node[0])
+            for successor in problem.getSuccessors(node[0]):
+                if successor[0] not in visitedLocation:
+                    cost = node[2] + successor[2]
+                    totalCost = cost + heuristic(successor[0], problem)
+                    frontier.push((successor[0], node[1] + [successor[1]], cost), totalCost)
+
     util.raiseNotDefined()
 
 
