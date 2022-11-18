@@ -141,23 +141,24 @@ def uniformCostSearch(problem):
 
     frontier = util.PriorityQueue()
     startLocation = problem.getStartState()
-    # (location, path, cost)
+    # successor's structure: (location, path, cost)
     startNode = (startLocation, [], 0)
     # totalCost = 0
     frontier.push(startNode, 0)
     visitedLocation = set()
 
     while not frontier.isEmpty():
-        # node[0] is location, while node[1] is path, while node[2] is cumulative cost
-        node = frontier.pop()
-        if problem.isGoalState(node[0]):
-            return node[1]
-        if node[0] not in visitedLocation:
-            visitedLocation.add(node[0])
-            for successor in problem.getSuccessors(node[0]):
-                if successor[0] not in visitedLocation:
-                    cost = node[2] + successor[2]
-                    frontier.push((successor[0], node[1] + [successor[1]], cost), cost)
+        currentState, path, currentCost = frontier.pop()
+        
+        if problem.isGoalState(currentState):
+            return path
+        
+        if currentState not in visitedLocation:
+            visitedLocation.add(currentState)
+            for nextState, action, cost in problem.getSuccessors(currentState):
+                if nextState not in visitedLocation:
+                    nextCost = currentCost + cost
+                    frontier.push((nextState, path + [action], nextCost), nextCost)
 
 def nullHeuristic(state, problem=None):
     """
@@ -171,24 +172,25 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     "*** YOUR CODE HERE ***"
     frontier = util.PriorityQueue()
     startLocation = problem.getStartState()
-    # (location, path, cost)
+    # successor's structure: (location, path, cost)
     startNode = (startLocation, [], 0)
     # totalCost = 0
     frontier.push(startNode, 0)
     visitedLocation = set()
 
     while not frontier.isEmpty():
-        # node[0] is location, while node[1] is path, while node[2] is cumulative cost
-        node = frontier.pop()
-        if problem.isGoalState(node[0]):
-            return node[1]
-        if node[0] not in visitedLocation:
-            visitedLocation.add(node[0])
-            for successor in problem.getSuccessors(node[0]):
-                if successor[0] not in visitedLocation:
-                    cost = node[2] + successor[2]
-                    totalCost = cost + heuristic(successor[0], problem)
-                    frontier.push((successor[0], node[1] + [successor[1]], cost), totalCost)
+        currentState, path, currentCost = frontier.pop()
+        
+        if problem.isGoalState(currentState):
+            return path
+        
+        if currentState not in visitedLocation:
+            visitedLocation.add(currentState)
+            for nextState, action, cost in problem.getSuccessors(currentState):
+                if nextState not in visitedLocation:
+                    nextCost = currentCost + cost
+                    estimatedCost = nextCost + heuristic(nextState, problem) # From start state to goal state
+                    frontier.push((nextState, path + [action], nextCost), estimatedCost)
 
 # Another way to implement a* search
 def aStarSearch_Other(problem, heuristic=nullHeuristic):
@@ -198,7 +200,7 @@ def aStarSearch_Other(problem, heuristic=nullHeuristic):
     frontier.push((problem.getStartState(), 0), 0)
     visited = set()
     path = []
-    pathsToNextState = util.PriorityQueue()           # Queue to maintaing path from start to a state; Pop concurrently with the fringe list
+    pathsToNextState = util.PriorityQueue() # Sublist for frontier; Queue to maintaing path from start to a state; Pop concurrently with the fringe list
 
     while not frontier.isEmpty():
         (currentState, currentCost) = frontier.pop()
@@ -211,11 +213,11 @@ def aStarSearch_Other(problem, heuristic=nullHeuristic):
             for (nextState, action, cost) in problem.getSuccessors(currentState):
                 if nextState not in visited:
                     nextCost = currentCost + cost
-                    totalCost = nextCost + heuristic(nextState, problem)
-                    frontier.push((nextState, totalCost), totalCost)
-                    pathsToNextState.push((path + [action]), totalCost)
+                    estimatedCost = nextCost + heuristic(nextState, problem)
+                    frontier.push((nextState, estimatedCost), estimatedCost)
+                    pathsToNextState.push((path + [action]), estimatedCost)
             
-            path = pathsToNextState.pop()
+        path = pathsToNextState.pop()
 
 
 # Abbreviations
