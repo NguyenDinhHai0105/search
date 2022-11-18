@@ -87,12 +87,53 @@ def depthFirstSearch(problem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    fringe = util.Stack()                # Fringe to manage which states(coordinates) to expand
+    fringe.push(problem.getStartState())
+    visited = []                    # List to check whether state has already been visited
+    path=[]                         # Final direction list
+    pathsToNextState = util.Stack()           # Stack to maintaing path from start to a state
+    
+    while not fringe.isEmpty():
+        currentState = fringe.pop()
+        
+        if (problem.isGoalState(currentState)):
+            return path
+        
+        if currentState not in visited:
+            visited.append(currentState)
+            successors = problem.getSuccessors(currentState)
+            for nextState, direction, cost in successors:
+                fringe.push(nextState)
+                tempPath = path + [direction]
+                pathsToNextState.push(tempPath)
+
+        path = pathsToNextState.pop()
+
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    fringe = util.Queue()                # Fringe to manage which states to expand
+    fringe.push(problem.getStartState())
+    visited = []                    # List to check whether state has already been visited
+    path=[]                         # Final direction list
+    pathsToNextState = util.Queue()           # Queue to maintaing path from start to a state; Pop concurrently with the fringe list
+    
+    while not fringe.isEmpty():
+        currState = fringe.pop()
+        
+        if (problem.isGoalState(currState)):
+            return path
+        
+        if currState not in visited:
+            visited.append(currState)
+            successors = problem.getSuccessors(currState)
+            for nextState, direction, cost in successors:
+                fringe.push(nextState)
+                tempPath = path + [direction] # save posible paths from the initial state to "current" states (means next state)
+                pathsToNextState.push(tempPath)
+
+        path = pathsToNextState.pop()
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
@@ -118,7 +159,6 @@ def uniformCostSearch(problem):
                     cost = node[2] + successor[2]
                     frontier.push((successor[0], node[1] + [successor[1]], cost), cost)
 
-    util.raiseNotDefined()
 def nullHeuristic(state, problem=None):
     """
     A heuristic function estimates the cost from the current state to the nearest
@@ -150,7 +190,32 @@ def aStarSearch(problem, heuristic=nullHeuristic):
                     totalCost = cost + heuristic(successor[0], problem)
                     frontier.push((successor[0], node[1] + [successor[1]], cost), totalCost)
 
-    util.raiseNotDefined()
+# Another way to implement a* search
+def aStarSearch_Other(problem, heuristic=nullHeuristic):
+    """Search the node that has the lowest combined cost and heuristic first."""
+    "*** YOUR CODE HERE ***"
+    frontier = util.PriorityQueue() # Have (state, cost) format; ordered by costs
+    frontier.push((problem.getStartState(), 0), 0)
+    visited = set()
+    path = []
+    pathsToNextState = util.PriorityQueue()           # Queue to maintaing path from start to a state; Pop concurrently with the fringe list
+
+    while not frontier.isEmpty():
+        (currentState, currentCost) = frontier.pop()
+        
+        if problem.isGoalState(currentState):
+            return path
+        
+        if currentState[0] not in visited:
+            visited.add(currentState)
+            for (nextState, action, cost) in problem.getSuccessors(currentState):
+                if nextState not in visited:
+                    nextCost = currentCost + cost
+                    totalCost = nextCost + heuristic(nextState, problem)
+                    frontier.push((nextState, totalCost), totalCost)
+                    pathsToNextState.push((path + [action]), totalCost)
+            
+            path = pathsToNextState.pop()
 
 
 # Abbreviations
