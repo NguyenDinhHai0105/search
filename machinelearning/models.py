@@ -27,6 +27,7 @@ class PerceptronModel(object):
         Returns: a node containing a single number (the score)
         """
         "*** YOUR CODE HERE ***"
+        return nn.DotProduct(x, self.get_weights())
 
     def get_prediction(self, x):
         """
@@ -35,12 +36,24 @@ class PerceptronModel(object):
         Returns: 1 or -1
         """
         "*** YOUR CODE HERE ***"
+        return 1 if nn.as_scalar(self.run(x)) >= 0 else -1
 
-    def train(self, dataset):
+    from backend import Dataset
+    def train(self, dataset: Dataset):
         """
         Train the perceptron until convergence.
         """
         "*** YOUR CODE HERE ***"
+        "Use Stachostic GD, so evaluation and param modification will based on each data point."
+        isAllCorrect = False
+        while not isAllCorrect:
+            isAllCorrect = True
+            for x, y in dataset.iterate_once(1):
+                y = nn.as_scalar(y)
+                if self.get_prediction(x) != y:
+                    self.get_weights().update(x, y) # w -= x*y
+                    isAllCorrect = False
+                
 
 class RegressionModel(object):
     """
@@ -51,6 +64,13 @@ class RegressionModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        hidden_layer_size = 88 # equivalent to number of output features
+        # 1 hidden layer (has weights denoted by w1 matrix)
+        self.w1 = nn.Parameter(1, hidden_layer_size)
+        self.b1 = nn.Parameter(1, hidden_layer_size)
+        # 1 node in output layer (has weights denoted by w2 matrix)
+        self.w2 = nn.Parameter(hidden_layer_size, 1)
+        self.b2 = nn.Parameter(1, 1)
 
     def run(self, x):
         """
@@ -62,6 +82,14 @@ class RegressionModel(object):
             A node with shape (batch_size x 1) containing predicted y-values
         """
         "*** YOUR CODE HERE ***"
+        linear_multi = nn.Linear(x, self.w1)
+        z1 = nn.AddBias(linear_multi, self.b1)
+        a1 = nn.ReLU(z1)
+        
+        linear_multi = nn.Linear(a1, self.w2)
+        z2 = nn.AddBias(linear_multi, self.b2)
+        
+        return z2
 
     def get_loss(self, x, y):
         """
@@ -74,12 +102,37 @@ class RegressionModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        predicted_y = self.run(x)
+        return nn.SquareLoss(predicted_y, y)
 
-    def train(self, dataset):
+    from backend import Dataset
+    def train(self, dataset: Dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        batch_size = dataset.x.shape[0]
+        learning_rate = 0.03
+        
+        def isAcceptable(loss_obj):
+            loss_function_value = loss_obj.data
+            # Final loss must be no more than 0.02 (set by autograder)
+            return True if loss_function_value <= 0.02 else False
+            
+        
+        # evaluate by loss function and modify params by GD on total dataset
+        for x, y in dataset.iterate_forever(batch_size):
+            
+            params = [self.w1, self.w2, self.b1, self.b2]
+            gradients = nn.gradients(self.get_loss(x, y), params)
+            
+            for i in range(len(gradients)):
+                params[i].update(gradients[i], -(learning_rate))
+            
+            
+            if isAcceptable(self.get_loss(x, y)):
+                return
+        
 
 class DigitClassificationModel(object):
     """
