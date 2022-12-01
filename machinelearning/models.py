@@ -114,6 +114,9 @@ class RegressionModel(object):
         batch_size = dataset.x.shape[0]
         learning_rate = 0.03
         
+        batch_number = 0
+        epoch = 0
+
         def isAcceptable(loss_obj):
             loss_function_value = loss_obj.data
             # Final loss must be no more than 0.02 (set by autograder)
@@ -122,7 +125,11 @@ class RegressionModel(object):
         
         # evaluate by loss function and modify params by GD on total dataset
         for x, y in dataset.iterate_forever(batch_size):
-            
+            batch_number = batch_number % 100 + 1
+            if batch_number == 1:
+                epoch += 1
+                print("Epoch: %s" % epoch)
+
             params = [self.w1, self.w2, self.b1, self.b2]
             gradients = nn.gradients(self.get_loss(x, y), params)
             
@@ -151,6 +158,12 @@ class DigitClassificationModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        self.w1 = nn.Parameter(784, 256)
+        self.b1 = nn.Parameter(1, 256)
+        self.w2 = nn.Parameter(256, 128)
+        self.b2 = nn.Parameter(1, 128)
+        self.w3 = nn.Parameter(128, 10)
+        self.b3 = nn.Parameter(1, 10)
 
     def run(self, x):
         """
@@ -167,6 +180,18 @@ class DigitClassificationModel(object):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
+        linear_multi = nn.Linear(x, self.w1)
+        z1 = nn.AddBias(linear_multi, self.b1)
+        a1 = nn.ReLU(z1)
+        
+        linear_multi = nn.Linear(a1, self.w2)
+        z2 = nn.AddBias(linear_multi, self.b2)
+        a2 = nn.ReLU(z2)
+        
+        linear_multi = nn.Linear(a2, self.w3)
+        z3 = nn.AddBias(linear_multi, self.b3)
+        
+        return z3
 
     def get_loss(self, x, y):
         """
@@ -182,12 +207,39 @@ class DigitClassificationModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        prediction = self.run(x)
+        return nn.SoftmaxLoss(prediction, y)
 
-    def train(self, dataset):
+    from backend import Dataset
+    def train(self, dataset: Dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        learning_rate = 0.2
+        batch_size = int(dataset.x.shape[0] / 100)
+        
+        batch_number = 0
+        epoch = 0
+
+        def isAcceptable(loss):
+            loss_value = loss.data
+            return True if loss_value < 0.015 else False
+        
+
+        for x, y in dataset.iterate_forever(batch_size):
+            batch_number = batch_number % 100 + 1
+            if batch_number == 1:
+                epoch += 1
+                print("Epoch: %s" % epoch)
+            
+            params_list = [self.w1, self.b1, self.w2, self.b2, self.w3, self.b3]
+            gradients = nn.gradients(self.get_loss(x, y), params_list)
+            
+            [params_list[i].update(gradients[i], -(learning_rate)) for i in range(len(params_list))]
+            
+            if isAcceptable(self.get_loss(x, y)):
+                return
 
 class LanguageIDModel(object):
     """
