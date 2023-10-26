@@ -389,4 +389,11 @@ def as_scalar(node):
     assert node.data.size == 1, (
         "Node has shape {}, cannot convert to a scalar".format(
             format_shape(node.data.shape)))
+
+    # Given the Perceptron problem, node.data = [[<number>]]
+    # Requirement: return a python number => the correct code: return node.data[0][0]
+    
+    # Given the Regression problem, node.data = <number>
+    # Requirement: return a python number => the correct code: return node.data
+
     return node.data

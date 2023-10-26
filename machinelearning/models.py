@@ -46,10 +46,13 @@ class PerceptronModel(object):
         "*** YOUR CODE HERE ***"
         "Use Stachostic GD, so evaluation and param modification will based on each data point."
         isAllCorrect = False
+        
         while not isAllCorrect:
             isAllCorrect = True
+            
             for x, y in dataset.iterate_once(1):
                 y = nn.as_scalar(y)
+                y = y[0][0] # newly added
                 if self.get_prediction(x) != y:
                     self.get_weights().update(x, y) # w -= x*y
                     isAllCorrect = False
@@ -236,7 +239,8 @@ class DigitClassificationModel(object):
             params_list = [self.w1, self.b1, self.w2, self.b2, self.w3, self.b3]
             gradients = nn.gradients(self.get_loss(x, y), params_list)
             
-            [params_list[i].update(gradients[i], -(learning_rate)) for i in range(len(params_list))]
+            for i in range(len(params_list)):
+                params_list[i].update(gradients[i], -(learning_rate)) #param -= gradient * learning_rate
             
             if isAcceptable(self.get_loss(x, y)):
                 return
